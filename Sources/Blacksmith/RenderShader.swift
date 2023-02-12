@@ -2,13 +2,13 @@ import Foundation
 import CoreMedia
 import Metal
 
-public class RenderShader {
+public class BSRenderShader {
     private var name: String
     private var renderPipelineState: MTLRenderPipelineState
-    private var textureSet: TextureSet?
+    private var textureSet: BSSlab?
     private let vertexBuffer: MTLBuffer
     private let fragmentBuffer: MTLBuffer
-    private let indicesBuffer: VectorBufferObject<UInt16>
+    private let indicesBuffer: BSVectorBuffer<UInt16>
     
     public init(
         vertexShader: String,
@@ -16,8 +16,8 @@ public class RenderShader {
         pixelFormat: MTLPixelFormat = .rg16Float,
         vertexBuffer: MTLBuffer,
         fragmentBuffer: MTLBuffer,
-        indicesBuffer: VectorBufferObject<UInt16>,
-        textureSet: TextureSet? = nil
+        indicesBuffer: BSVectorBuffer<UInt16>,
+        textureSet: BSSlab? = nil
     ) {
         name = fragmentShader
         
@@ -38,7 +38,7 @@ public class RenderShader {
     }
     
     public final func execute(commandBuffer: MTLCommandBuffer,
-                              textureSet: TextureSet,
+                              textureSet: BSSlab,
                               fragmentTextures: [MTLTexture]) {
         execute(commandBuffer: commandBuffer,
                 texture: textureSet.pong,
@@ -65,7 +65,13 @@ public class RenderShader {
             renderCommandEncoder.setCullMode(.back)
             renderCommandEncoder.setRenderPipelineState(renderPipelineState)
             
-            renderCommandEncoder.drawIndexedPrimitives(type: .triangle, indexCount: indicesBuffer.count, indexType: .uint16, indexBuffer: indicesBuffer.buffer, indexBufferOffset: 0)
+            renderCommandEncoder.drawIndexedPrimitives(
+                type: .triangle,
+                indexCount: indicesBuffer.count,
+                indexType: .uint16,
+                indexBuffer: indicesBuffer.mtlBuffer,
+                indexBufferOffset: 0
+            )
             
             renderCommandEncoder.endEncoding()
             
@@ -77,7 +83,9 @@ public class RenderShader {
         let renderPassDescriptor = MTLRenderPassDescriptor()
         renderPassDescriptor.colorAttachments[0].texture = texture
         renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 1.0)
+        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(
+            0.0, 0.0, 0.0, 1.0
+        )
         renderPassDescriptor.colorAttachments[0].storeAction = .store
         
         return renderPassDescriptor

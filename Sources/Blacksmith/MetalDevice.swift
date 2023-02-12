@@ -60,6 +60,10 @@ public class MetalDevice {
         outputTexture = texture
     }
     
+    final func buffer(length: Int, storageMode: MTLResourceOptions = []) -> MTLBuffer {
+        return mtlDevice.makeBuffer(length: length, options: storageMode)!
+    }
+    
     final func buffer<T>(element: inout T, storageMode: MTLResourceOptions = []) -> MTLBuffer {
         let size = MemoryLayout<T>.stride
         return mtlDevice.makeBuffer(bytes: &element, length: size, options: storageMode)!

@@ -1,6 +1,6 @@
 import MetalKit
 
-public class TextureSet {
+public class BSSlab {
     public var ping: MTLTexture
     public var pong: MTLTexture
     
