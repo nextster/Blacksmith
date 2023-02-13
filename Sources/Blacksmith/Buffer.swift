@@ -16,10 +16,13 @@ public struct BSDynamicBuffer<T> {
     private var index: Int = 0
     public var offset: Int = 0
     
-    public init(buffersCount: Int, storageMode: MTLResourceOptions = [], label: String = "") {
+    public init(buffersCount: Int, storageMode: MTLResourceOptions = [], label: String = "", device: BSDevice) {
         self.buffersCount = buffersCount
 //        var value = value
-        self.mtlBuffer = MetalDevice.sharedInstance.buffer(length: BSDynamicBuffer<T>.alignedSize * buffersCount, storageMode: .storageModeShared)
+        self.mtlBuffer = device.buffer(
+            length: BSDynamicBuffer<T>.alignedSize * buffersCount,
+            storageMode: .storageModeShared
+        )
         self.mtlBuffer.label = label
     }
     
@@ -40,9 +43,9 @@ public struct BSDynamicBuffer<T> {
 public struct BSScalarBuffer<T> {
     public let mtlBuffer: MTLBuffer
     
-    public init(_ value: T, storageMode: MTLResourceOptions = []) {
+    public init(_ value: T, storageMode: MTLResourceOptions = [], device: BSDevice) {
         var value = value
-        self.mtlBuffer = MetalDevice.sharedInstance.buffer(element: &value, storageMode: storageMode)
+        self.mtlBuffer = device.buffer(element: &value, storageMode: storageMode)
     }
     
     public var bufferValue: UnsafeMutablePointer<T> {
@@ -58,9 +61,9 @@ public struct BSVectorBuffer<T> {
     public let mtlBuffer: MTLBuffer
     public let count: Int
     
-    public init(_ value: Array<T>, storageMode: MTLResourceOptions = []) {
+    public init(_ value: Array<T>, storageMode: MTLResourceOptions = [], device: BSDevice) {
         self.count = value.count
-        self.mtlBuffer = MetalDevice.sharedInstance.buffer(array: value, storageMode: storageMode)
+        self.mtlBuffer = device.buffer(array: value, storageMode: storageMode)
     }
     
     public var bufferValue: UnsafeMutableBufferPointer<T> {

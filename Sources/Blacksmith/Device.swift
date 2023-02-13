@@ -2,62 +2,32 @@ import Foundation
 import Metal
 import MetalKit
 
-enum MetalDeviceError: Error {
-    case failedToCreateFunction(name: String)
-}
-
-public class MetalDevice {
-    static let sharedInstance = MetalDevice()
+public class BSDevice {
+    enum Errors: Error {
+        case failedToCreateFunction(name: String)
+        case cannotCreateDepthState
+    }
     
     private let pipelineCache = NSCache<AnyObject, AnyObject>()
     
-    let queue = DispatchQueue.global(qos: .background)
+    public let mtlDevice: MTLDevice
+    let commandQueue: MTLCommandQueue
     
-    let mtlDevice: MTLDevice
-    private let commandQueue: MTLCommandQueue
+    private lazy var textureLoader: MTKTextureLoader = {
+        MTKTextureLoader(device: mtlDevice)
+    }()
     
-    var activeCommandBuffer: MTLCommandBuffer
-    var defaultLibrary: MTLLibrary
+    let defaultLibrary: MTLLibrary
     
-    internal var inputTexture: MTLTexture?
-    internal var outputTexture: MTLTexture?
-    
-    private init() {
-        mtlDevice = MTLCreateSystemDefaultDevice()!
+    public init(mtlDevice: MTLDevice) {
+        self.mtlDevice = mtlDevice
         commandQueue = mtlDevice.makeCommandQueue()!
-        
-        activeCommandBuffer = commandQueue.makeCommandBuffer()!
-        
         defaultLibrary = mtlDevice.makeDefaultLibrary()!
     }
     
     // MARK: Convenient methods
-    final class func createRenderPipeline(
-        vertexFunctionName: String,
-        fragmentFunctionName: String,
-        pixelFormat: MTLPixelFormat = .rgba8Unorm
-    ) throws -> MTLRenderPipelineState {
-        return try self.sharedInstance.createRenderPipeline(
-            vertexFunctionName: vertexFunctionName,
-            fragmentFunctionName: fragmentFunctionName,
-            pixelFormat: pixelFormat
-        )
-    }
-    
-    final class func createComputePipeline(computeFunctionName: String) throws -> MTLComputePipelineState {
-        return try self.sharedInstance.createComputePipeline(
-            computeFunctionName: computeFunctionName
-        )
-    }
-    
-    final class func createTexture(descriptor: MTLTextureDescriptor) -> MTLTexture {
-        return self.sharedInstance.mtlDevice.makeTexture(descriptor: descriptor)!
-    }
-    
-    final func swapBuffers() {
-        let texture = inputTexture
-        inputTexture = outputTexture
-        outputTexture = texture
+    final func createTexture(descriptor: MTLTextureDescriptor) -> MTLTexture {
+        return self.mtlDevice.makeTexture(descriptor: descriptor)!
     }
     
     final func buffer(length: Int, storageMode: MTLResourceOptions = []) -> MTLBuffer {
@@ -74,14 +44,12 @@ public class MetalDevice {
         return mtlDevice.makeBuffer(bytes: array, length: size, options: storageMode)!
     }
     
-    public final func loadTexture(url: URL) throws -> MTLTexture {
-        return try MTKTextureLoader(device: mtlDevice).newTexture(URL: url)
+    public final func newCommandBuffer() -> MTLCommandBuffer? {
+        commandQueue.makeCommandBuffer()
     }
-    
-    public final func newCommandBuffer() -> MTLCommandBuffer {
-        return commandQueue.makeCommandBuffer()!
-    }
-    
+}
+
+extension BSDevice {
     final func createRenderPipeline(
         vertexFunctionName: String,
         fragmentFunctionName: String,
@@ -94,11 +62,11 @@ public class MetalDevice {
         }
         
         guard let vertexFunction = defaultLibrary.makeFunction(name: vertexFunctionName) else {
-            throw MetalDeviceError.failedToCreateFunction(name: vertexFunctionName)
+            throw Errors.failedToCreateFunction(name: vertexFunctionName)
         }
         
         guard let fragmentFunction = defaultLibrary.makeFunction(name: fragmentFunctionName) else {
-            throw MetalDeviceError.failedToCreateFunction(name: fragmentFunctionName)
+            throw Errors.failedToCreateFunction(name: fragmentFunctionName)
         }
         
         let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
@@ -122,7 +90,7 @@ public class MetalDevice {
         }
         
         guard let computeFunction = defaultLibrary.makeFunction(name: computeFunctionName) else {
-            throw MetalDeviceError.failedToCreateFunction(name: computeFunctionName)
+            throw Errors.failedToCreateFunction(name: computeFunctionName)
         }
         
         let pipelineState =  try mtlDevice.makeComputePipelineState(function: computeFunction)
@@ -131,5 +99,34 @@ public class MetalDevice {
         
         return pipelineState
     }
+    
+    public func loadTexture(name: String) throws -> MTLTexture {
+        /// Load texture data with optimal parameters for sampling
+        
+        let textureLoaderOptions: [MTKTextureLoader.Option : Any] = [
+            .textureUsage: NSNumber(value: MTLTextureUsage.shaderRead.rawValue),
+            .textureStorageMode: NSNumber(value: MTLStorageMode.`private`.rawValue)
+        ]
+        
+        return try textureLoader.newTexture(name: name,
+                                            scaleFactor: 1.0,
+                                            bundle: nil,
+                                            options: textureLoaderOptions)
+        
+    }
+    
+    public final func loadTexture(url: URL) throws -> MTLTexture {
+        return try textureLoader.newTexture(URL: url)
+    }
 }
-
+extension BSDevice {
+    func makeDepthStencilState(view: MTKView) throws -> MTLDepthStencilState {
+        let depthStateDescriptor = MTLDepthStencilDescriptor()
+        depthStateDescriptor.depthCompareFunction = MTLCompareFunction.less
+        depthStateDescriptor.isDepthWriteEnabled = true
+        guard let depthState = mtlDevice.makeDepthStencilState(descriptor: depthStateDescriptor) else {
+            throw Errors.cannotCreateDepthState
+        }
+        return depthState
+    }
+}

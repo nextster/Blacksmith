@@ -4,15 +4,15 @@ public class BSSlab {
     public var ping: MTLTexture
     public var pong: MTLTexture
     
-    public init(size: float2, format: MTLPixelFormat = .rg16Float, name: String) {
+    public init(size: float2, format: MTLPixelFormat = .rg16Float, name: String, device: BSDevice) {
         let textureDescriptor = MTLTextureDescriptor()
         textureDescriptor.pixelFormat = format
         textureDescriptor.usage = [.shaderRead, .renderTarget]
         textureDescriptor.width = Int(size.x)
         textureDescriptor.height = Int(size.y)
 
-        ping = MetalDevice.createTexture(descriptor: textureDescriptor)
-        pong = MetalDevice.createTexture(descriptor: textureDescriptor)
+        ping = device.createTexture(descriptor: textureDescriptor)
+        pong = device.createTexture(descriptor: textureDescriptor)
         
         ping.label = name
         pong.label = name

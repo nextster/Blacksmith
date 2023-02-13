@@ -5,7 +5,6 @@ import Metal
 public class BSRenderShader {
     private var name: String
     private var renderPipelineState: MTLRenderPipelineState
-    private var textureSet: BSSlab?
     private let vertexBuffer: MTLBuffer
     private let fragmentBuffer: MTLBuffer
     private let indicesBuffer: BSVectorBuffer<UInt16>
@@ -17,16 +16,15 @@ public class BSRenderShader {
         vertexBuffer: MTLBuffer,
         fragmentBuffer: MTLBuffer,
         indicesBuffer: BSVectorBuffer<UInt16>,
-        textureSet: BSSlab? = nil
-    ) {
+        device: BSDevice
+    ) throws {
         name = fragmentShader
         
-        self.textureSet = textureSet
         self.vertexBuffer = vertexBuffer
         self.fragmentBuffer = fragmentBuffer
         self.indicesBuffer = indicesBuffer
         
-        renderPipelineState = try! MetalDevice.createRenderPipeline(
+        renderPipelineState = try device.createRenderPipeline(
             vertexFunctionName: vertexShader,
             fragmentFunctionName: fragmentShader,
             pixelFormat: pixelFormat
