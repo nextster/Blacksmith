@@ -37,61 +37,53 @@ public class BSRenderShader {
         print("Deinit Filter")
     }
     
-    public final func execute(commandBuffer: MTLCommandBuffer,
+    public final func execute(encoder: MTLRenderCommandEncoder,
                               textureSet: BSSlab,
                               fragmentTextures: [MTLTexture]) {
-        execute(commandBuffer: commandBuffer,
+        execute(encoder: encoder,
                 texture: textureSet.pong,
                 fragmentTextures: fragmentTextures)
         textureSet.swap()
     }
     
-    public final func execute(commandBuffer: MTLCommandBuffer,
+    public final func execute(encoder: MTLRenderCommandEncoder,
                               texture: MTLTexture,
                               fragmentTextures: [MTLTexture]) {
-        let renderPassDescriptor = configureRenderPassDescriptor(texture: texture)
-        if let renderCommandEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-            
-            renderCommandEncoder.pushDebugGroup("Render Encoder \(name)")
-            
-            renderCommandEncoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
-            
-            for (idx, txt) in fragmentTextures.enumerated() {
-                renderCommandEncoder.setFragmentTexture(txt, index: idx)
-            }
-            
-            renderCommandEncoder.setFragmentBuffer(fragmentBuffer, offset: 0, index: 0)
-            
-            renderCommandEncoder.setCullMode(.back)
-            renderCommandEncoder.setRenderPipelineState(renderPipelineState)
-            
-            renderCommandEncoder.drawIndexedPrimitives(
-                type: .triangle,
-                indexCount: indicesBuffer.count,
-                indexType: .uint16,
-                indexBuffer: indicesBuffer.mtlBuffer,
-                indexBufferOffset: 0
-            )
-            
-            renderCommandEncoder.endEncoding()
-            
-            renderCommandEncoder.popDebugGroup()
+        encoder.pushDebugGroup("Render Encoder \(name)")
+        
+        encoder.setVertexBuffer(vertexBuffer, offset: 0, index: 0)
+        
+        for (idx, txt) in fragmentTextures.enumerated() {
+            encoder.setFragmentTexture(txt, index: idx)
         }
+        
+        encoder.setFragmentBuffer(fragmentBuffer, offset: 0, index: 0)
+        
+        encoder.setCullMode(.back)
+        encoder.setRenderPipelineState(renderPipelineState)
+        
+        encoder.drawIndexedPrimitives(
+            type: .triangle,
+            indexCount: indicesBuffer.count,
+            indexType: .uint16,
+            indexBuffer: indicesBuffer.mtlBuffer,
+            indexBufferOffset: 0
+        )
+        
+        encoder.endEncoding()
+        
+        encoder.popDebugGroup()
     }
     
-    private func configureRenderPassDescriptor(texture: MTLTexture?) -> MTLRenderPassDescriptor {
-        let renderPassDescriptor = MTLRenderPassDescriptor()
-        renderPassDescriptor.colorAttachments[0].texture = texture
-        renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(
-            0.0, 0.0, 0.0, 1.0
-        )
-        renderPassDescriptor.colorAttachments[0].storeAction = .store
-        
-        return renderPassDescriptor
-    }
+//    private func configureRenderPassDescriptor(texture: MTLTexture?) -> MTLRenderPassDescriptor {
+//        let renderPassDescriptor = MTLRenderPassDescriptor()
+//        renderPassDescriptor.colorAttachments[0].texture = texture
+//        renderPassDescriptor.colorAttachments[0].loadAction = .dontCare
+//        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(
+//            0.0, 0.0, 0.0, 1.0
+//        )
+//        renderPassDescriptor.colorAttachments[0].storeAction = .store
+//
+//        return renderPassDescriptor
+//    }
 }
-
-
-
-

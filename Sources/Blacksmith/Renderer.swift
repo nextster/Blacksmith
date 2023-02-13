@@ -43,7 +43,7 @@ open class BSRenderer<U>: NSObject, MTKViewDelegate {
                 semaphore.signal()
             }
             
-            drawCall()
+            uniformBuffer.nextBuffer()
             
             /// Delay getting the currentRenderPassDescriptor until we absolutely need it to avoid
             ///   holding onto the drawable and blocking the display pipeline any longer than necessary
@@ -51,7 +51,10 @@ open class BSRenderer<U>: NSObject, MTKViewDelegate {
             
             if let renderPassDescriptor = renderPassDescriptor,
                 let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) {
-                
+                renderPassDescriptor.colorAttachments[0].loadAction = .clear
+//                        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(1.0, 0.0, 0.0, 0.5)
+//
+                renderEncoder.label = "Primary Render Encoder"
                 render(renderEncoder)
                 
                 renderEncoder.endEncoding()
@@ -64,8 +67,6 @@ open class BSRenderer<U>: NSObject, MTKViewDelegate {
             commandBuffer.commit()
         }
     }
-    
-    open func drawCall() {}
     
     open func render(_ encoder: MTLRenderCommandEncoder) {}
     
