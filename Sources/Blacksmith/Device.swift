@@ -50,32 +50,32 @@ public class BSDevice {
 }
 
 extension BSDevice {
-    final func createRenderPipeline(
-        vertexFunctionName: String,
-        fragmentFunctionName: String,
-        pixelFormat: MTLPixelFormat
+    public final func createRenderPipeline(
+        vertex: String,
+        fragment: String,
+        _ configure: (MTLRenderPipelineDescriptor) -> Void
     ) throws -> MTLRenderPipelineState {
-        let cacheKey = NSString(string: vertexFunctionName + fragmentFunctionName)
+        let cacheKey = NSString(string: vertex + fragment)
         
         if let pipelineState = pipelineCache.object(forKey: cacheKey) as? MTLRenderPipelineState {
             return pipelineState
         }
         
-        guard let vertexFunction = defaultLibrary.makeFunction(name: vertexFunctionName) else {
-            throw Errors.failedToCreateFunction(name: vertexFunctionName)
+        guard let vertexFunction = defaultLibrary.makeFunction(name: vertex) else {
+            throw Errors.failedToCreateFunction(name: vertex)
         }
         
-        guard let fragmentFunction = defaultLibrary.makeFunction(name: fragmentFunctionName) else {
-            throw Errors.failedToCreateFunction(name: fragmentFunctionName)
+        guard let fragmentFunction = defaultLibrary.makeFunction(name: fragment) else {
+            throw Errors.failedToCreateFunction(name: fragment)
         }
         
-        let pipelineStateDescriptor = MTLRenderPipelineDescriptor()
-        pipelineStateDescriptor.colorAttachments[0].pixelFormat = pixelFormat
-        pipelineStateDescriptor.vertexFunction = vertexFunction
-        pipelineStateDescriptor.fragmentFunction = fragmentFunction
-        pipelineStateDescriptor.label = fragmentFunctionName
+        let desc = MTLRenderPipelineDescriptor()
+        desc.vertexFunction = vertexFunction
+        desc.fragmentFunction = fragmentFunction
         
-        let pipelineState = try mtlDevice.makeRenderPipelineState(descriptor: pipelineStateDescriptor)
+        configure(desc)
+        
+        let pipelineState = try mtlDevice.makeRenderPipelineState(descriptor: desc)
         
         pipelineCache.setObject(pipelineState, forKey: cacheKey)
         

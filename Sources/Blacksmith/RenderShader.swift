@@ -25,9 +25,7 @@ public class BSRenderShader {
         self.indicesBuffer = indicesBuffer
         
         renderPipelineState = try device.createRenderPipeline(
-            vertexFunctionName: vertexShader,
-            fragmentFunctionName: fragmentShader,
-            pixelFormat: pixelFormat
+            vertex: vertexShader, fragment: fragmentShader, {_ in}
         )
     }
     
@@ -67,8 +65,6 @@ public class BSRenderShader {
             indexBuffer: indicesBuffer.mtlBuffer,
             indexBufferOffset: 0
         )
-        
-        encoder.endEncoding()
         
         encoder.popDebugGroup()
     }

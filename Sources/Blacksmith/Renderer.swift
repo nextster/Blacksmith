@@ -57,6 +57,7 @@ open class BSRenderer<U>: NSObject, MTKViewDelegate {
               let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else { return }
         renderPassDescriptor.colorAttachments[0].loadAction = .clear
         renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0)
+        renderPassDescriptor.colorAttachments[0].storeAction = .store
         //
         renderEncoder.label = "Primary Render Encoder"
         render(renderEncoder)
@@ -69,32 +70,7 @@ open class BSRenderer<U>: NSObject, MTKViewDelegate {
     }
     
     open func render(_ encoder: MTLRenderCommandEncoder) {}
-    
     open func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {}
-}
-
-extension BSRenderer {
-    public func buildRenderPipeline(descriptor: MTLVertexDescriptor) throws -> MTLRenderPipelineState {
-        /// Build a render state pipeline object
-        
-        let library = self.device.defaultLibrary
-        
-        let vertexFunction = library.makeFunction(name: "vertexShader")
-        let fragmentFunction = library.makeFunction(name: "fragmentShader")
-        
-        let pipelineDescriptor = MTLRenderPipelineDescriptor()
-        pipelineDescriptor.label = "RenderPipeline"
-        pipelineDescriptor.rasterSampleCount = view.sampleCount
-        pipelineDescriptor.vertexFunction = vertexFunction
-        pipelineDescriptor.fragmentFunction = fragmentFunction
-        pipelineDescriptor.vertexDescriptor = descriptor
-        
-        pipelineDescriptor.colorAttachments[0].pixelFormat = view.colorPixelFormat
-        pipelineDescriptor.depthAttachmentPixelFormat = view.depthStencilPixelFormat
-        pipelineDescriptor.stencilAttachmentPixelFormat = view.depthStencilPixelFormat
-        
-        return try device.mtlDevice.makeRenderPipelineState(descriptor: pipelineDescriptor)
-    }
 }
 
 extension BSRenderer {
