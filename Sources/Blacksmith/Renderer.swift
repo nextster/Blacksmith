@@ -56,7 +56,6 @@ open class BSRenderer<U>: NSObject, MTKViewDelegate {
         guard let renderPassDescriptor = renderPassDescriptor,
               let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor) else { return }
         renderPassDescriptor.colorAttachments[0].loadAction = .clear
-        renderPassDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0.0, 0.0, 0.0, 0.0)
         renderPassDescriptor.colorAttachments[0].storeAction = .store
         //
         renderEncoder.label = "Primary Render Encoder"

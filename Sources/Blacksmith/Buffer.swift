@@ -26,17 +26,34 @@ public struct BSDynamicBuffer<T> {
         self.mtlBuffer.label = label
     }
     
-    public var bufferValue: UnsafeMutablePointer<T> {
-        return UnsafeMutableRawPointer(mtlBuffer.contents() + offset).bindMemory(to: T.self, capacity: 1)
+    public var currentBufferValue: UnsafeMutablePointer<T> {
+        return bufferValueFor(offset: offset)
     }
     
-    public func withValue(_ handler: (_ pointer: inout T) -> Void) {
-        handler(&bufferValue.pointee)
+    public func withCurrentValue(_ handler: (_ pointer: inout T) -> Void) {
+        handler(&currentBufferValue.pointee)
+    }
+    
+    public func withAllValues(_ handler: (_ pointer: inout T) -> Void) {
+        for idx in 0..<buffersCount {
+            let offset = offsetFor(idx: idx)
+            handler(&bufferValueFor(offset: offset).pointee)
+        }
     }
     
     public mutating func nextBuffer() {
         index = (index + 1) % buffersCount
-        offset = BSDynamicBuffer<T>.alignedSize * index
+        offset = offsetFor(idx: index)
+    }
+    
+    @inline(__always)
+    private func bufferValueFor(offset: Int) -> UnsafeMutablePointer<T> {
+        UnsafeMutableRawPointer(mtlBuffer.contents() + offset).bindMemory(to: T.self, capacity: 1)
+    }
+    
+    @inline(__always)
+    private func offsetFor(idx: Int) -> Int {
+        BSDynamicBuffer<T>.alignedSize * idx
     }
 }
 
