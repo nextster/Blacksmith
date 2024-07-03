@@ -7,7 +7,7 @@ public protocol BSBuffer {
 
 public struct BSDynamicBuffer<T> {
     static var alignedSize: Int {
-        (MemoryLayout<T>.size + 0xFF) & -0x100
+        MemoryLayout<T>.stride
     }
     public let mtlBuffer: MTLBuffer
 //    public let alignedSize: Int
@@ -26,12 +26,12 @@ public struct BSDynamicBuffer<T> {
         self.mtlBuffer.label = label
     }
     
-    public var currentBufferValue: UnsafeMutablePointer<T> {
-        return bufferValueFor(offset: offset)
+    public var currentBufferValue: T {
+        return bufferValueFor(offset: offset).pointee
     }
     
     public func withCurrentValue(_ handler: (_ pointer: inout T) -> Void) {
-        handler(&currentBufferValue.pointee)
+        handler(&bufferValueFor(offset: offset).pointee)
     }
     
     public func withAllValues(_ handler: (_ pointer: inout T) -> Void) {
@@ -60,17 +60,17 @@ public struct BSDynamicBuffer<T> {
 public struct BSScalarBuffer<T> {
     public let mtlBuffer: MTLBuffer
     
-    public init(_ value: T, storageMode: MTLResourceOptions = [], device: BSDevice) {
-        var value = value
-        self.mtlBuffer = device.buffer(element: &value, storageMode: storageMode)
+    
+    public init(storageMode: MTLResourceOptions = [], device: BSDevice) {
+        self.mtlBuffer = device.buffer(length: MemoryLayout<T>.size * 2, storageMode: storageMode)
     }
     
-    public var bufferValue: UnsafeMutablePointer<T> {
-        return mtlBuffer.contents().bindMemory(to: T.self, capacity: 1)
+    public var bufferValue: T {
+        return mtlBuffer.contents().bindMemory(to: T.self, capacity: 1).pointee
     }
     
     public func withValue(_ handler: (_ pointer: inout T) -> Void) {
-        handler(&bufferValue.pointee)
+        handler(&mtlBuffer.contents().bindMemory(to: T.self, capacity: 1).pointee)
     }
 }
 

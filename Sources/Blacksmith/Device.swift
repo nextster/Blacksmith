@@ -40,7 +40,7 @@ public class BSDevice {
     }
     
     final func buffer<T>(array: Array<T>, storageMode: MTLResourceOptions = []) -> MTLBuffer {
-        let size = array.count * MemoryLayout.size(ofValue: array[0])
+        let size = array.count * MemoryLayout<T>.stride
         return mtlDevice.makeBuffer(bytes: array, length: size, options: storageMode)!
     }
     
