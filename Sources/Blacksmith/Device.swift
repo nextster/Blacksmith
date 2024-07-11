@@ -26,7 +26,7 @@ public class BSDevice {
     }
     
     // MARK: Convenient methods
-    final func createTexture(descriptor: MTLTextureDescriptor) -> MTLTexture {
+    public final func createTexture(descriptor: MTLTextureDescriptor) -> MTLTexture {
         return self.mtlDevice.makeTexture(descriptor: descriptor)!
     }
     
@@ -82,7 +82,7 @@ extension BSDevice {
         return pipelineState
     }
     
-    final func createComputePipeline(computeFunctionName: String) throws -> MTLComputePipelineState {
+    public final func createComputePipeline(computeFunctionName: String) throws -> MTLComputePipelineState {
         let cacheKey = NSString(string: computeFunctionName)
         
         if let pipelineState = pipelineCache.object(forKey: cacheKey) as? MTLComputePipelineState {
